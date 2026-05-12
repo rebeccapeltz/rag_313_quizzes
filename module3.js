@@ -4,34 +4,34 @@ const modules = [
       label: "Data - raw conversion and preparation for ingestion",
       questions: [
         {
-          q: "What is 'chunking' in the context of preparing documents for a RAG pipeline?",
-          opts: ["Compressing documents into smaller file sizes", "Splitting documents into smaller overlapping text segments for indexing", "Encrypting documents before storage", "Converting PDFs to images"],
+          q: "Why can't a PDF file be fed directly into a FAISS vector index without any preprocessing?",
+          opts: ["FAISS only accepts files smaller than 1MB", "PDFs are binary files — FAISS needs plain text or numerical vectors, not raw binary document formats", "PDFs must be converted to images before indexing", "FAISS requires JSON-formatted input"],
           ans: 1,
-          exp: "Chunking breaks large documents into smaller pieces (e.g. 500 tokens with 50-token overlap) so each chunk fits in the LLM's context window and represents a focused topic."
+          exp: "FAISS indexes dense numerical vectors. A PDF is a binary format containing encoded fonts, layout, and metadata. It must first be converted to plain text before it can be chunked and embedded for the index."
         },
         {
-          q: "Why is chunk overlap important when splitting documents?",
-          opts: ["It reduces the total number of vectors stored", "It ensures that information near chunk boundaries isn't lost or split across unrelated chunks", "It speeds up embedding generation", "It is required by the FAISS index format"],
+          q: "In convert.py, the script uses docling's DocumentConverter rather than a simple text extractor. What advantage does docling provide over basic text extraction?",
+          opts: ["It converts PDFs faster than any other library", "It understands document structure — preserving headings, tables, and lists — rather than dumping raw characters", "It automatically translates documents to English", "It splits documents into chunks during conversion"],
           ans: 1,
-          exp: "Without overlap, a sentence straddling two chunk boundaries gets split between them. Overlap (e.g. 50 tokens) ensures that boundary content appears in both chunks, improving retrieval accuracy."
+          exp: "Basic extractors pull raw characters in reading order, losing structure. docling performs layout analysis to identify headings, tables, and paragraphs, preserving that structure in the Markdown output — which helps downstream chunking produce better results."
         },
         {
-          q: "Which LangChain class is commonly used to split plain text into chunks by character count with overlap?",
-          opts: ["RecursiveCharacterTextSplitter", "DocumentLoader", "FAISSTextChunker", "ParagraphSplitter"],
-          ans: 0,
-          exp: "RecursiveCharacterTextSplitter splits text by trying paragraph, sentence, and character separators in order, creating chunks of a target size with configurable overlap."
-        },
-        {
-          q: "A developer loads a 200-page PDF and creates 1,800 text chunks. Each chunk is then passed to an embedding model. What does the embedding model output for each chunk?",
-          opts: ["A compressed version of the text", "A fixed-length numerical vector representing the semantic meaning of that chunk", "A keyword index of the chunk", "A summary of the chunk"],
+          q: "The convert.py script saves output files as .md (Markdown) rather than .txt. Why is Markdown a better intermediate format for a RAG pipeline?",
+          opts: ["Markdown files are smaller than plain text files", "Markdown encodes document structure (headings, lists, tables) that text splitters can use as natural split points during ingestion", "FAISS can only ingest Markdown files", "Markdown prevents special characters from causing errors"],
           ans: 1,
-          exp: "Embedding models transform text into dense numeric vectors (e.g. 768 or 1024 dimensions) that encode semantic meaning. Similar meanings produce vectors that are close together in vector space."
+          exp: "Markdown preserves structural cues like ## headings and - list items. Text splitters can use these as meaningful boundaries when chunking, resulting in more coherent chunks than splitting a wall of unstructured plain text."
         },
         {
-          q: "When converting raw source documents (PDFs, Word files, text files) for RAG ingestion, which step comes FIRST?",
-          opts: ["Generate embeddings", "Create the FAISS index", "Extract plain text from the source files", "Chunk the text"],
-          ans: 2,
-          exp: "Before you can chunk or embed, you need clean plain text. Extraction (using libraries like pypdf, docx2txt, etc.) converts binary formats into text that the pipeline can process."
+          q: "The script uses raw_dir.glob('*.pdf') to find source files. On a Linux server, a colleague uploads a file named Report.PDF (uppercase extension). What happens?",
+          opts: ["glob('*.pdf') matches it automatically since PDF extensions are case-insensitive", "The file is skipped — Linux filesystems are case-sensitive and *.pdf does not match .PDF", "Python raises a FileNotFoundError for the whole directory", "docling detects and converts it anyway"],
+          ans: 1,
+          exp: "Linux filesystems are case-sensitive by default. glob('*.pdf') only matches lowercase .pdf extensions. Files uploaded from Windows or macOS with uppercase .PDF extensions will be silently skipped unless the glob pattern accounts for both cases."
+        },
+        {
+          q: "The convert.py script writes output files with encoding='utf-8'. What problem does this prevent later in the RAG pipeline?",
+          opts: ["It prevents the output files from being too large", "It ensures special characters — accented letters, smart quotes, symbols — are preserved correctly instead of becoming garbled text in the index", "UTF-8 encoding is required by the docling library", "It compresses the Markdown output for faster loading"],
+          ans: 1,
+          exp: "Source documents often contain non-ASCII characters like accented letters (é, ü), em-dashes, or smart quotes. Without explicit UTF-8 encoding, Python may use a system default that corrupts these characters, introducing noise into the vector index."
         }
       ]
     }
