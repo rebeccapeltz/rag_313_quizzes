@@ -1,40 +1,40 @@
 const modules = [
     {
-      title: "Module 2<br>Docker Model Runner",
-      label: "Docker Model Runner & demo",
+      title: "Module 2<br>Data Conversion and Prep for Ingestion",
+      label: "Data - raw conversion and preparation for ingestion",
       questions: [
         {
-          q: "What is Docker Model Runner's primary role in a local RAG application?",
-          opts: ["It manages the FAISS vector index files", "It hosts and serves AI models (embedding and chat) locally via an API endpoint — no cloud required", "It orchestrates the LangChain pipeline", "It converts documents to text chunks"],
+          q: "Why can't a PDF file be fed directly into a FAISS vector index without any preprocessing?",
+          opts: ["FAISS only accepts files smaller than 1MB", "PDFs are binary files — FAISS needs plain text or numerical vectors, not raw binary document formats", "PDFs must be converted to images before indexing", "FAISS requires JSON-formatted input"],
           ans: 1,
-          exp: "Docker Model Runner runs AI models in containers and exposes them on a local endpoint (e.g. localhost:12434). This lets your Python app call them using the OpenAI SDK format without any cloud API keys."
+          exp: "FAISS indexes dense numerical vectors. A PDF is a binary format containing encoded fonts, layout, and metadata. It must first be converted to plain text before it can be chunked and embedded for the index."
         },
         {
-          q: "What is the OpenAI-compatible base URL you would configure your Python code to use when calling a model hosted in Docker Model Runner?",
-          opts: ["https://api.openai.com/v1", "http://localhost:12434/engines/llama.cpp/v1", "http://127.0.0.1:8080/model", "http://docker-hub.internal/v1"],
+          q: "In convert.py, the script uses docling's DocumentConverter rather than a simple text extractor. What advantage does docling provide over basic text extraction?",
+          opts: ["It converts PDFs faster than any other library", "It understands document structure — preserving headings, tables, and lists — rather than dumping raw characters", "It automatically translates documents to English", "It splits documents into chunks during conversion"],
           ans: 1,
-          exp: "Docker Model Runner exposes models at http://localhost:12434/engines/llama.cpp/v1 by default. Because it's OpenAI-compatible, you just point the base_url there and your existing SDK calls work unchanged."
+          exp: "Basic extractors pull raw characters in reading order, losing structure. docling performs layout analysis to identify headings, tables, and paragraphs, preserving that structure in the Markdown output — which helps downstream chunking produce better results."
         },
         {
-          q: "Which Docker CLI command pulls the llama3.2 model to be used with Docker Model Runner?",
-          opts: ["docker pull llama3.2", "docker model pull ai/llama3.2", "docker run ai/llama3.2", "docker compose up llama3.2"],
+          q: "The convert.py script saves output files as .md (Markdown) rather than .txt. Why is Markdown a better intermediate format for a RAG pipeline?",
+          opts: ["Markdown files are smaller than plain text files", "Markdown encodes document structure (headings, lists, tables) that text splitters can use as natural split points during ingestion", "FAISS can only ingest Markdown files", "Markdown prevents special characters from causing errors"],
           ans: 1,
-          exp: "docker model pull ai/llama3.2 downloads the model image from Docker Hub into Model Runner's local model store, making it available to serve."
+          exp: "Markdown preserves structural cues like ## headings and - list items. Text splitters can use these as meaningful boundaries when chunking, resulting in more coherent chunks than splitting a wall of unstructured plain text."
         },
         {
-          q: "In the RAG app, TWO separate models are run in Docker Model Runner. What are their respective roles?",
-          opts: ["One for chunking documents, one for storing the index", "One embedding model (e.g. ai/embeddinggemma) to convert text to vectors, one chat model (e.g. ai/llama3.2) to generate answers", "One for retrieval, one for reranking", "One for English, one for other languages"],
+          q: "The script uses raw_dir.glob('*.pdf') to find source files. On a Linux server, a colleague uploads a file named Report.PDF (uppercase extension). What happens?",
+          opts: ["glob('*.pdf') matches it automatically since PDF extensions are case-insensitive", "The file is skipped — Linux filesystems are case-sensitive and *.pdf does not match .PDF", "Python raises a FileNotFoundError for the whole directory", "docling detects and converts it anyway"],
           ans: 1,
-          exp: "The embedding model converts query text and document chunks into vectors for similarity search. The chat model (LLM) receives the retrieved context and the user's question and generates the final answer."
+          exp: "Linux filesystems are case-sensitive by default. glob('*.pdf') only matches lowercase .pdf extensions. Files uploaded from Windows or macOS with uppercase .PDF extensions will be silently skipped unless the glob pattern accounts for both cases."
         },
         {
-          q: "What key privacy advantage does running both models in Docker Model Runner provide over using cloud APIs?",
-          opts: ["It makes the models faster", "Your documents and queries never leave your local machine — no data is sent to external servers", "The models are more accurate locally", "Docker Model Runner supports more model types than cloud APIs"],
+          q: "The convert.py script writes output files with encoding='utf-8'. What problem does this prevent later in the RAG pipeline?",
+          opts: ["It prevents the output files from being too large", "It ensures special characters — accented letters, smart quotes, symbols — are preserved correctly instead of becoming garbled text in the index", "UTF-8 encoding is required by the docling library", "It compresses the Markdown output for faster loading"],
           ans: 1,
-          exp: "With Docker Model Runner, all inference happens on your own hardware. Sensitive documents (HR policies, patient data, proprietary IP) stay entirely within your network or machine — a critical advantage for regulated industries."
+          exp: "Source documents often contain non-ASCII characters like accented letters (é, ü), em-dashes, or smart quotes. Without explicit UTF-8 encoding, Python may use a system default that corrupts these characters, introducing noise into the vector index."
         }
       ]
     }
-  ]
+  ];
 
 export { modules };

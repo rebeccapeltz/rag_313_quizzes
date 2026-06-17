@@ -1,41 +1,42 @@
 const modules = [
     {
-      title: "Module 5<br>RAG Chain Code Walkthrough",
-      label: "Code walkthrough & demo",
+      title: "Module 5<br>Local vs Cloud RAG",
+      label: "Local vs Cloud RAG",
 
       questions: [
         {
-          q: "In a LangChain RAG chain, what does RunnablePassthrough accomplish?",
-          opts: ["It skips the retrieval step", "It passes the original user question through the chain unchanged so it can be used alongside retrieved context", "It caches the LLM response", "It formats the final output as plain text"],
+          q: "A healthcare organization wants to build a RAG assistant over patient records. Which deployment approach is most appropriate and why?",
+          opts: ["Cloud RAG using OpenAI — lower latency", "Local RAG — patient data is protected health information (PHI) that must not leave the organization's network", "Either works equally — RAG is always HIPAA compliant", "Cloud RAG using a VPC endpoint is the only compliant option"],
           ans: 1,
-          exp: "RunnablePassthrough forwards the input (the user's question) to the next stage without modification. In a RAG chain this ensures the question reaches the prompt template alongside the retrieved docs."
+          exp: "PHI is protected under HIPAA. Sending patient records to third-party cloud APIs creates compliance and legal risk. Local RAG keeps all data on-premises — the safest default for healthcare data."
         },
         {
-          q: "What is a CrossEncoder reranker and why is it added after initial FAISS retrieval?",
-          opts: ["It re-embeds all documents in the index for improved accuracy", "It takes the top-k retrieved chunks and the original query together and re-scores them for relevance — more accurate than vector similarity alone", "It filters out duplicate chunks from the FAISS results", "It compresses chunks before sending them to the LLM"],
+          q: "A startup wants to build a customer-facing RAG chatbot with thousands of concurrent users and no in-house GPU hardware. Which is the better fit?",
+          opts: ["Local RAG on a developer laptop", "Cloud RAG (e.g. OpenAI + Pinecone) — scales on demand without hardware investment", "Local RAG on a single server", "Neither — RAG cannot handle concurrent users"],
           ans: 1,
-          exp: "Bi-encoder (FAISS) retrieval is fast but approximate. A CrossEncoder re-scores each candidate chunk by looking at the query and chunk together, significantly improving result relevance at the cost of a bit more compute."
+          exp: "Cloud RAG services scale horizontally. For high-concurrency public products where hardware procurement isn't practical, cloud APIs offer the simplest scaling path — at the cost of ongoing per-token billing and data leaving your system."
         },
         {
-          q: "In the app.py code, what is the purpose of the score_threshold parameter when calling FAISS as a retriever?",
-          opts: ["It sets the maximum number of results returned", "It filters out document chunks whose similarity score falls below the threshold — only sufficiently relevant chunks pass to the LLM", "It controls the LLM's temperature", "It limits the number of tokens per chunk"],
+          q: "What is the primary hardware constraint that limits which LLMs can be run locally with Docker Model Runner?",
+          opts: ["The version of Docker installed", "Available RAM and VRAM — models must fit in memory to run", "The number of CPU cores", "The size of the FAISS index on disk"],
           ans: 1,
-          exp: "score_threshold sets a minimum relevance bar. Chunks below the threshold are discarded even if they're the top results, preventing the LLM from being fed loosely-related or irrelevant context."
+          exp: "LLMs must be loaded entirely (or in quantized form) into RAM/VRAM to run. A 7B parameter model in 4-bit quantization needs ~4–6GB; larger models require more. This is the dominant hardware bottleneck for local inference."
         },
         {
-          q: "Looking at a LangChain LCEL chain like: chain = {'context': retriever, 'question': RunnablePassthrough()} | prompt | llm | StrOutputParser(). What does StrOutputParser do at the end?",
-          opts: ["It splits the LLM output into structured JSON", "It converts the LLM's raw message object into a plain Python string", "It filters profanity from the answer", "It sends the response back to the vector store"],
+          q: "Model quantization (e.g. 4-bit or 8-bit) is used in local RAG deployments primarily to:",
+          opts: ["Improve the model's accuracy on specialized domains", "Reduce the model's memory footprint so it can run on hardware with less RAM/VRAM", "Speed up the FAISS index search", "Encrypt the model weights for security"],
           ans: 1,
-          exp: "LangChain LLMs return message objects (AIMessage), not raw strings. StrOutputParser extracts the .content string from the message, making it easy to display or process downstream."
+          exp: "Quantization reduces the precision of model weights (e.g. from 32-bit floats to 4-bit integers), shrinking memory requirements by 4–8x with modest accuracy tradeoffs — making large models practical on consumer hardware."
         },
         {
-          q: "Why does the RAG app set the LLM's base_url to the Docker Model Runner endpoint rather than using the real OpenAI API URL?",
-          opts: ["The OpenAI SDK only works with local URLs", "Docker Model Runner exposes an OpenAI-compatible API, so pointing base_url at it redirects calls to the local model without changing any other code", "It is required by LangChain's ChatOpenAI class", "To enable streaming responses"],
+          q: "A developer is comparing local RAG and cloud RAG for a use case processing 10 million document queries per month. What is the key economic argument FOR local RAG at this scale?",
+          opts: ["Local models always give better answers", "At high query volume, the fixed cost of local hardware is amortized across queries — cloud API costs scale linearly and can become very expensive", "Cloud APIs charge per document, not per query", "Local RAG doesn't require chunking"],
           ans: 1,
-          exp: "Docker Model Runner intentionally mimics the OpenAI REST API format. By changing only base_url and api_key='ollama' (or similar placeholder), the exact same ChatOpenAI calls go to local models instead of OpenAI's servers."
+          exp: "Cloud LLM APIs charge per token. At millions of queries/month, those costs compound rapidly. Once local hardware is purchased, marginal cost per query approaches zero — making local RAG economically favorable at high scale."
         }
       ]
-    },
+    }
   ]
+  export { modules }
 
-export { modules }
+
